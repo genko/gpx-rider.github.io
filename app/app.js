@@ -42,6 +42,16 @@ import {
   toggleMapFullscreen,
 } from "./hud/map-hud.mjs";
 import { handleVisibilityChange, resetRide, toggleSimulation } from "./ride/movement.mjs";
+import {
+  cancelVirtualShiftKeyCapture,
+  captureDownshiftKey,
+  captureUpshiftKey,
+  handleVirtualShiftKeydown,
+  initializeVirtualShifting,
+  registerVirtualShiftHud,
+  shiftVirtualGearDown,
+  shiftVirtualGearUp,
+} from "./ride/virtual-shifting.mjs";
 import { restoreSavedRide, restoreSettings, saveRide } from "./storage/persistence.mjs";
 import {
   cancelProfileSelection,
@@ -67,6 +77,7 @@ import {
   updateScreenshotSettingsFromControls,
   updateSpeedOutput,
   updateUnitsFromControls,
+  updateVirtualShiftingFromControls,
 } from "./settings/settings-ui.mjs";
 import { els, state, updateProgressLabel } from "./core/state.mjs";
 import { initStorage } from "./storage/storage.mjs";
@@ -75,6 +86,7 @@ import { initScreenManager } from "./hud/screen-manager.mjs";
 import {
   handleHeartRateStatus,
   handleStrapHeartRate,
+  handleTrainerConnected,
   handleTrainerStatus,
   handleTrainerTelemetry,
 } from "./ride/telemetry-ui.mjs";
@@ -108,6 +120,7 @@ async function startApp() {
     onTelemetry: handleTrainerTelemetry,
     onStatus: handleTrainerStatus,
     onMessage: updateProgressLabel,
+    onConnected: handleTrainerConnected,
   });
   initHeartRate({
     onHeartRate: handleStrapHeartRate,
@@ -134,6 +147,8 @@ async function startApp() {
   registerTrainingMetersHud();
   registerCameraDebugHud();
   registerMinimapHud();
+  registerVirtualShiftHud();
+  initializeVirtualShifting();
 
   restoreSettings();
   restoreRideLog();
@@ -172,6 +187,7 @@ function bindEvents() {
   els.mapSettingsShortcutBtn?.addEventListener("click", () => openSettings());
   els.settingsCloseBtn.addEventListener("click", () => els.settingsDialog.close());
   els.settingsDoneBtn.addEventListener("click", () => els.settingsDialog.close());
+  els.settingsDialog.addEventListener("close", cancelVirtualShiftKeyCapture);
   els.settingsTabs.forEach((tab) => {
     tab.addEventListener("click", () => selectSettingsTab(tab.dataset.settingsTab));
   });
@@ -192,6 +208,12 @@ function bindEvents() {
     saveRide();
   });
   els.gradeIntervalInput.addEventListener("input", updateGradeIntervalFromControl);
+  els.virtualShiftingInput.addEventListener("change", updateVirtualShiftingFromControls);
+  els.virtualShiftProfileSelect.addEventListener("change", updateVirtualShiftingFromControls);
+  els.virtualShiftDownKeyBtn.addEventListener("click", captureDownshiftKey);
+  els.virtualShiftUpKeyBtn.addEventListener("click", captureUpshiftKey);
+  els.virtualShiftDownBtn.addEventListener("click", shiftVirtualGearDown);
+  els.virtualShiftUpBtn.addEventListener("click", shiftVirtualGearUp);
   els.distanceUnitSelect.addEventListener("change", updateUnitsFromControls);
   els.energyUnitSelect.addEventListener("change", updateUnitsFromControls);
   els.timeFormatSelect.addEventListener("change", updateUnitsFromControls);
@@ -275,6 +297,9 @@ function bindEvents() {
   els.copyGalleryMetadataBtn.addEventListener("click", copyGalleryMetadata);
   document.addEventListener("fullscreenchange", handleFullscreenChange);
   document.addEventListener("visibilitychange", handleVisibilityChange);
+  // Registered before the shortcut handler below so a key being captured in
+  // Settings can stop it from also acting on that key.
+  document.addEventListener("keydown", handleVirtualShiftKeydown);
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && closeZoneHelpPopovers()) {
       event.stopPropagation();

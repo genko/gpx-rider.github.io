@@ -34,6 +34,7 @@ It is built for people who want to:
 - **Bring any GPX track** — open a local file or choose a ready-to-ride route from the built-in gallery.
 - **Photorealistic 3D terrain** — follow elevated, grade-colored route lines through Google Photorealistic 3D Maps with a real 3D rider marker, beacon, minimap, and terrain-aware camera lift.
 - **Bluetooth trainer control** — connect an FTMS-compatible smart trainer, or a Tacx FE-C trainer (the wheel-on Flow/Vortex/Bushido/Genius, which predate FTMS), through Web Bluetooth. Trainer-reported speed advances the rider while route grade drives simulated resistance.
+- **Virtual shifting** — leave the bike in one gear and shift through a configurable drivetrain with two keys. Each gear adds or removes a small resistance offset on top of the road grade, so gradient and gear selection together decide resistance and speed on any FTMS or FE-C trainer. A compact on-map widget shows the current gear. The default profile is a Shimano Di2 2x12 (52/36, 11-34); choose another profile and rebind the shift keys in Settings.
 - **Heart-rate support** — connect a standard Bluetooth heart-rate strap or use heart-rate data reported by the trainer.
 - **Route intelligence** — calculate distance, noise-filtered ascent and descent, grade, difficulty, terrain classification, sustained climbs, and smart ETA directly from the GPX data.
 - **Climb and segment focus** — inspect detected climbs or drag across the elevation profile to select any custom route segment.
@@ -54,7 +55,8 @@ It is built for people who want to:
 3. Select **Connect** beside the smart trainer and choose an FTMS-compatible or Tacx FE-C device.
 4. Optionally connect a Bluetooth heart-rate strap the same way.
 5. Start pedaling. Trainer speed moves the rider along the route, while the current GPX grade is sent back to the trainer.
-6. Use **Download .FIT** whenever you want to export the recorded ride.
+6. To use virtual shifting, enable it in **Settings › Trainer & sensors**, leave the bike in one gear, and use **J** (easier) or **L** (harder) — or the on-screen −/+ buttons. The selected gear profile supplies the tooth counts; rebind either key in Settings.
+7. Use **Download .FIT** whenever you want to export the recorded ride.
 
 Not on the bike? Use the Simulation card's **Start** button to preview the route at a fixed speed. Real pedaling automatically stops a running simulation and takes priority.
 
@@ -187,11 +189,24 @@ Most modern smart trainers speak the standard Fitness Machine Service (FTMS) ove
 
 The pure framing and page codec is isolated in [`app/trainer/fec.mjs`](app/trainer/fec.mjs) and covered by unit tests for checksums, frame round-tripping, grade encoding across the clamped range, and telemetry decoding. The Bluetooth backend that composes it lives in [`app/trainer/trainer-fec.mjs`](app/trainer/trainer-fec.mjs); protocol detection and routing stay in [`app/trainer/trainer.mjs`](app/trainer/trainer.mjs). The rolling-resistance coefficient sent with each grade command is tunable under `trainer` in [`app/core/tuning.yaml`](app/core/tuning.yaml).
 
+### Virtual shifting from tooth counts
+
+A smart trainer has no gear sensor, so GPX Rider turns the selected drivetrain's tooth counts into a resistance offset on top of the road grade. The same mechanism works on every FTMS or FE-C trainer:
+
+- **A linear virtual sequence with no duplicate ratios.** Every cog on the largest chainring is used, plus only the cogs on smaller chainrings that are easier than the largest ring's easiest gear. Near-identical crossover ratios (within `gear_overlap_tolerance`, 2% by default) are collapsed to the larger chainring, so up/down always walks a strictly linear sequence (a 52/36 × 11-34 Di2 profile yields 15 usable gears).
+- **Development, not raw gear number.** Each combination becomes a development in meters per crank revolution (`chainring / cog × wheel circumference`), so 52×17 and 36×21 are compared by the distance they actually cover, not by their labels.
+- **A neutral gear defines zero.** The profile's `neutral_gear` gets a 0% resistance offset on flat ground. Every other gear gets `(development / neutral development − 1) × grade_offset_gain`, so one shift is a small, predictable change and the ends of the cassette feel meaningfully different.
+- **Gradient and gear share one command.** The trainer receives `route grade + gear offset` (clamped to the same range as before). It then produces the resulting speed from that combined resistance, exactly as it does for plain terrain; the map follows the trainer's reported speed.
+- **Discrete shifts bypass the averaging window.** A shift forces an immediate, un-averaged update, while normal terrain changes keep the existing smoothing and throttle, so a gear change feels instant instead of mushy.
+- **The recorded ride stays honest.** The ride recorder stores the actual road grade, never the virtual gear's resistance offset, and the FIT encoder writes it as the standard `grade` field. Exported activities describe the terrain, not the trainer setting.
+
+The pure tooth-count/development/offset math lives in [`app/ride/gearing.mjs`](app/ride/gearing.mjs) and is unit-tested; the key handling, profile resolution, and trainer-facing integration live in [`app/ride/virtual-shifting.mjs`](app/ride/virtual-shifting.mjs). The shipped profiles, neutral/default gears, wheel circumference, overlap tolerance, and resistance gain are documented under `virtual_shifting` in [`app/core/tuning.yaml`](app/core/tuning.yaml).
+
 ### Architecture
 
 - **Zero build step, vanilla ES modules, no package dependencies.** The deployed `app/` directory is static HTML, CSS, JavaScript, and assets.
 - Code is organized by feature: camera, route processing, ride execution, trainer hardware, map rendering, HUD, persistence, gallery, and demo mode.
-- Pure geometry, routing, climb, ETA, units, FIT, and simulation logic is separated from browser and DOM coordination and tested with Node's built-in test runner.
+- Pure geometry, routing, climb, ETA, units, FIT, gearing, and simulation logic is separated from browser and DOM coordination and tested with Node's built-in test runner.
 - A deliberately thin `app.js` performs startup and event wiring; it does not contain feature logic.
 - Shared mutable application state lives in one documented foundation module.
 - Adjustable physics, thresholds, defaults, colors, timings, and paths live in `app/core/tuning.yaml`.

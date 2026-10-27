@@ -88,6 +88,72 @@ trainer:
   # trainers, whose Set Simulation Parameters carries its own rolling term.
   fec_default_crr: 0.004
 
+# --- Virtual shifting --------------------------------------------------------
+#
+# With virtual shifting enabled, the real bike stays in one gear and a pair of
+# keys changes a virtual gear instead. Each virtual gear is one combination of
+# the configured chainrings and cassette cogs. The resistance sent to the
+# trainer is the route grade plus a grade offset derived from how much harder
+# the selected gear is than the profile's neutral gear: a harder gear adds
+# resistance, an easier gear removes it. The trainer then produces the
+# resulting speed from that combined resistance, exactly as it does for plain
+# route grade. This works uniformly across FTMS and FE-C trainers.
+#
+# Gear profiles and their tooth counts live here (retune them and reload); the
+# enable switch, profile choice, and shifter keys are user settings persisted
+# in the browser and editable in Settings › Trainer & sensors.
+virtual_shifting:
+  # Default off — virtual shifting only changes resistance after you opt in.
+  enabled: false
+  # Profile id used until the user picks another one (one of the keys under
+  # profiles below).
+  profile: "di2_2x12"
+  # The two keys on the small keyboard mounted on the trainer. downshift makes
+  # the gear easier, upshift makes it harder. Both are rebindable in Settings.
+  downshift_key: "j"
+  upshift_key: "l"
+  # Resistance change per unit of relative development:
+  #   offset = (gear development / neutral development - 1) * gain
+  # in percent grade. 12 keeps a single gear step perceptible without turning
+  # virtual shifting into a second terrain model. Raise it for a more dramatic
+  # gear feel, lower it for subtler shifts.
+  grade_offset_gain: 12
+  # Virtual gears closer than this fraction (0.02 = 2%) are treated as the
+  # same ratio and collapsed to the larger chainring. This removes the tiny
+  # crossover step a 2x/3x profile can otherwise produce, so up/down always
+  # walks a strictly linear sequence with no front/rear duplicate ratios.
+  gear_overlap_tolerance: 0.02
+  # Wheel circumference used to turn tooth counts into meters of development.
+  # A profile can override this. 2.136 m is a 700×28c road wheel.
+  wheel_circumference_meters: 2.136
+  # Gear profiles shown in Settings. The usable virtual sequence is generated
+  # from chainrings + cassette: every cog on the largest chainring, plus the
+  # cogs on smaller rings that are easier than the largest ring's easiest
+  # gear. That keeps the sequence strictly linear and avoids redundant
+  # cross-chain combinations. neutral_gear (front, rear) gets a 0% offset on
+  # flat ground;
+  # default_gear is where the profile starts.
+  profiles:
+    di2_2x12:
+      name: "Shimano Di2 2x12 (52/36, 11-34)"
+      chainrings: [52, 36]
+      cassette: [11, 12, 13, 14, 15, 17, 19, 21, 24, 27, 30, 34]
+      neutral_gear: [52, 17]
+      default_gear: [52, 17]
+    road_2x11:
+      name: "Road 2x11 (50/34, 11-28)"
+      chainrings: [50, 34]
+      cassette: [11, 12, 13, 14, 15, 17, 19, 21, 23, 25, 28]
+      neutral_gear: [50, 17]
+      default_gear: [50, 17]
+    gravel_1x12:
+      name: "Gravel 1x12 (40, 10-44)"
+      chainrings: [40]
+      cassette: [10, 11, 12, 13, 14, 15, 17, 19, 22, 26, 32, 44]
+      neutral_gear: [40, 17]
+      default_gear: [40, 17]
+      wheel_circumference_meters: 2.215
+
 # --- Route math (grade, ascent/descent) --------------------------------------
 route_math:
   # The live grade is measured over a window this many meters behind and ahead

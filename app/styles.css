@@ -798,6 +798,31 @@ body {
   color: var(--accent);
 }
 
+/* compact virtual gear readout, left HUD column below the clock */
+.fs-gear {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  background: var(--fs-glass-bg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.fs-gear-value {
+  font: 600 20px/1 var(--font-num);
+  color: var(--accent);
+}
+
+.fs-gear-detail {
+  font: 600 9px/1 var(--font-ui);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fs-label);
+}
+
 .fs-training-meters {
   display: grid;
   width: 184px;
@@ -1894,6 +1919,71 @@ progress.ascent-progress::-moz-progress-bar {
   white-space: nowrap;
 }
 
+.virtual-shift-panel {
+  padding: 12px 16px 13px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.virtual-shift-readout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.virtual-shift-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.virtual-shift-label,
+.virtual-shift-hint {
+  font: 600 9px/1 var(--font-ui);
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.virtual-shift-gear {
+  font: 600 20px/1 var(--font-num);
+  color: var(--accent);
+}
+
+.virtual-shift-buttons,
+.virtual-shift-key-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.virtual-shift-buttons {
+  flex: none;
+}
+
+.virtual-shift-buttons .btn {
+  min-width: 34px;
+}
+
+.virtual-shift-key-buttons {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.virtual-shift-key-buttons .btn.capturing {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.virtual-shift-hint {
+  margin: 8px 0 0;
+}
+
+#virtualShiftProfileSelect {
+  min-width: 0;
+  max-width: 58%;
+  text-overflow: ellipsis;
+}
+
 .demo-card {
   display: flex;
   flex-direction: column;
@@ -2978,6 +3068,15 @@ input[type="color"] {
 
   .fs-clock-ascent {
     font-size: 13px;
+  }
+
+  .fs-gear {
+    gap: 7px;
+    padding: 7px 11px;
+  }
+
+  .fs-gear-value {
+    font-size: 17px;
   }
 
   .fs-training-meters {

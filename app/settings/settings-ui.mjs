@@ -19,6 +19,11 @@ import { els, state } from "../core/state.mjs";
 import { updateTelemetryUi } from "../ride/telemetry-ui.mjs";
 import { renderZoneSummaries, updateTrainingMeters } from "../ride/training-zones.mjs";
 import {
+  applyVirtualShiftingState,
+  setVirtualGearProfile,
+  setVirtualShiftingEnabled,
+} from "../ride/virtual-shifting.mjs";
+import {
   DEFAULT_BEACON_COLOR,
   DEFAULT_BEACON_DIAMETER_METERS,
   DEFAULT_BEACON_ENABLED,
@@ -73,6 +78,23 @@ export function updateGradeIntervalFromControl() {
   );
   els.gradeIntervalOutput.value = `${state.gradeUpdateIntervalSeconds} s`;
   saveSettings();
+}
+
+export function updateVirtualShiftingFromControls() {
+  // Read both controls before the first setter runs: enabling can re-sync the
+  // select to the current state profile, which would otherwise hide a profile
+  // change made in the same event.
+  const enabled = els.virtualShiftingInput.checked;
+  const profileId = els.virtualShiftProfileSelect.value;
+  setVirtualShiftingEnabled(enabled);
+  setVirtualGearProfile(profileId);
+  saveSettings();
+}
+
+export function syncVirtualShiftingControls() {
+  applyVirtualShiftingState();
+  els.virtualShiftingInput.checked = state.virtualShiftingEnabled;
+  els.virtualShiftProfileSelect.value = state.virtualGearProfileId;
 }
 
 export function updateUnitsFromControls() {

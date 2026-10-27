@@ -12,6 +12,7 @@ import { updateGalleryMetadataExport } from "../gallery-ui/gallery-export.mjs";
 import { clamp } from "../core/geo.mjs";
 import { updateFullscreenClock } from "../hud/map-hud.mjs";
 import { isMoving } from "./movement.mjs";
+import { trainerResistanceGrade } from "./virtual-shifting.mjs";
 import { renderProfile } from "../route/profile-ui.mjs";
 import { updateRecordingUi } from "./recording-ui.mjs";
 import {
@@ -125,7 +126,7 @@ export function updateRideUi(options = {}) {
 
   updateRecordingUi();
   if (!state.demoModeActive) {
-    queueTrainerGradeSample(grade, {
+    queueTrainerGradeSample(trainerResistanceGrade(grade), {
       force: options.force,
       intervalSeconds: state.gradeUpdateIntervalSeconds,
     });

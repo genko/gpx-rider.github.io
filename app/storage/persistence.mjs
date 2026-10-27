@@ -15,6 +15,7 @@ import {
 import { syncDemoModeUi } from "../demo/demo-mode.mjs";
 import { resetGalleryMetadataExportForRoute } from "../gallery-ui/gallery-export.mjs";
 import { clamp, roundCoordinate } from "../core/geo.mjs";
+import { normalizeShiftKey } from "../ride/gearing.mjs";
 import { normalizeHudOrder } from "../hud/map-hud.mjs";
 import { updateStartButton } from "../ride/movement.mjs";
 import { enterOverviewMode } from "../camera/overview-camera.mjs";
@@ -32,6 +33,7 @@ import {
   syncProfileSeriesButtons,
   syncRenderingControls,
   syncRiderProfileControls,
+  syncVirtualShiftingControls,
   updateRenderingSettingsLabels,
   updateSpeedOutput,
 } from "../settings/settings-ui.mjs";
@@ -139,6 +141,28 @@ export function restoreSettings() {
   if (Number.isFinite(gradeInterval)) {
     state.gradeUpdateIntervalSeconds = clamp(gradeInterval, GRADE_INTERVAL_MIN_SECONDS, GRADE_INTERVAL_MAX_SECONDS);
   }
+
+  if (typeof settings?.virtualShiftingEnabled === "boolean") {
+    state.virtualShiftingEnabled = settings.virtualShiftingEnabled;
+  }
+
+  if (typeof settings?.virtualGearProfileId === "string") {
+    state.virtualGearProfileId = settings.virtualGearProfileId;
+  }
+
+  const virtualGearIndex = Number(settings?.virtualGearIndex);
+  if (Number.isFinite(virtualGearIndex)) {
+    state.virtualGearIndex = Math.round(virtualGearIndex);
+  }
+
+  state.virtualShiftDownshiftKey = normalizeShiftKey(
+    settings?.virtualShiftDownshiftKey,
+    state.virtualShiftDownshiftKey,
+  );
+  state.virtualShiftUpshiftKey = normalizeShiftKey(
+    settings?.virtualShiftUpshiftKey,
+    state.virtualShiftUpshiftKey,
+  );
 
   if (settings?.distanceUnits === "imperial") state.distanceUnits = "imperial";
   if (settings?.energyUnits === "kj") state.energyUnits = "kj";
@@ -310,6 +334,7 @@ export function restoreSettings() {
   updateCameraSettingsLabels();
   syncRenderingControls();
   updateRenderingSettingsLabels();
+  syncVirtualShiftingControls();
   applyTerrainTilesSetting();
   els.screenshotButtonInput.checked = state.showScreenshotButton;
   els.screenshotAspectSelect.value = state.screenshotAspect;
@@ -347,6 +372,11 @@ export function saveSettings() {
     screenshotAspect: state.screenshotAspect,
     screenshotWidth: state.screenshotWidth,
     gradeUpdateIntervalSeconds: state.gradeUpdateIntervalSeconds,
+    virtualShiftingEnabled: state.virtualShiftingEnabled,
+    virtualGearProfileId: state.virtualGearProfileId,
+    virtualGearIndex: state.virtualGearIndex,
+    virtualShiftDownshiftKey: state.virtualShiftDownshiftKey,
+    virtualShiftUpshiftKey: state.virtualShiftUpshiftKey,
     distanceUnits: state.distanceUnits,
     energyUnits: state.energyUnits,
     timeFormat: state.timeFormat,

@@ -3,8 +3,9 @@
 // session, activity) that Strava, Garmin Connect, and intervals.icu accept.
 //
 // samples: [{ t (unix seconds), lat, lng, ele (m), distance (m),
-//             speedKph, powerWatts, heartRateBpm, cadenceRpm }] — nullable
-//             fields allowed.
+//             speedKph, powerWatts, heartRateBpm, cadenceRpm, gradePercent }]
+//             — nullable fields allowed. gradePercent is the actual road grade;
+//             it must never carry the virtual-shifting resistance offset.
 // summary: { startTimeMs, totalElapsedSeconds, totalTimerSeconds,
 //            totalDistanceMeters, totalCalories (kcal, nullable) }
 
@@ -17,6 +18,7 @@ const BASE_TYPE = {
   enum: 0x00,
   string: 0x07,
   uint8: 0x02,
+  sint16: 0x83,
   uint16: 0x84,
   uint32: 0x86,
   sint32: 0x85,
@@ -26,6 +28,7 @@ const INVALID = {
   [BASE_TYPE.enum]: 0xff,
   [BASE_TYPE.string]: 0x00,
   [BASE_TYPE.uint8]: 0xff,
+  [BASE_TYPE.sint16]: 0x7fff,
   [BASE_TYPE.uint16]: 0xffff,
   [BASE_TYPE.uint32]: 0xffffffff,
   [BASE_TYPE.sint32]: 0x7fffffff,
@@ -35,6 +38,7 @@ const SIZE = {
   [BASE_TYPE.enum]: 1,
   [BASE_TYPE.string]: 1,
   [BASE_TYPE.uint8]: 1,
+  [BASE_TYPE.sint16]: 2,
   [BASE_TYPE.uint16]: 2,
   [BASE_TYPE.uint32]: 4,
   [BASE_TYPE.sint32]: 4,
@@ -76,6 +80,7 @@ const RECORD_FIELDS = [
   [7, BASE_TYPE.uint16], // power (W)
   [3, BASE_TYPE.uint8], // heart_rate (bpm)
   [4, BASE_TYPE.uint8], // cadence (rpm)
+  [9, BASE_TYPE.sint16], // grade (scale 100, percent) — the actual road grade
 ];
 const LAP_FIELDS = [
   [253, BASE_TYPE.uint32], // timestamp (lap end)
@@ -230,6 +235,7 @@ export function encodeFitActivity({ samples, summary }) {
       Number.isFinite(sample.powerWatts) ? Math.max(0, Math.round(sample.powerWatts)) : null,
       Number.isFinite(sample.heartRateBpm) ? Math.round(sample.heartRateBpm) : null,
       Number.isFinite(sample.cadenceRpm) ? Math.round(sample.cadenceRpm) : null,
+      encodeScaled(sample.gradePercent, 100),
     ]);
   }
 

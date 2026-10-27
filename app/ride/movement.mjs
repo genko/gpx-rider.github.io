@@ -253,6 +253,9 @@ function tick(now) {
       caloriesKcal: currentCaloriesKcal(),
       routeProgressMeters: state.progressMeters,
       cadenceRpm: state.trainerCadenceRpm,
+      // The road grade, never trainerResistanceGrade(): a FIT file describes
+      // the ride, not the virtual gear's resistance offset.
+      gradePercent: currentGrade,
     });
   }
 

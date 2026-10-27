@@ -156,6 +156,12 @@
               </div>
             </div>
 
+            <!-- compact virtual gear readout (Settings › Trainer & sensors) -->
+            <div id="virtualShiftHud" class="fs-gear" hidden aria-live="polite">
+              <span id="virtualShiftHudGear" class="fs-gear-value">--</span>
+              <span id="virtualShiftHudDetail" class="fs-gear-detail">--</span>
+            </div>
+
             <!-- top-center: climb banner (on a climb, or approaching one) -->
             <div id="climbBanner" class="climb-banner" hidden aria-live="polite">
               <div id="climbBannerAhead" class="climb-banner-ahead" hidden>
@@ -388,6 +394,20 @@
               </div>
               <button id="connectHrBtn" type="button" class="btn btn-outline-blue btn-sm">Connect</button>
             </div>
+            <div id="virtualShiftPanel" class="virtual-shift-panel" hidden>
+              <div class="virtual-shift-readout">
+                <div class="virtual-shift-text">
+                  <span class="virtual-shift-label">Virtual gear</span>
+                  <strong id="virtualShiftGear" class="virtual-shift-gear">--</strong>
+                  <span id="virtualShiftDetail" class="connection-status">--</span>
+                </div>
+                <div class="virtual-shift-buttons">
+                  <button id="virtualShiftDownBtn" type="button" class="btn btn-ghost btn-sm" title="Downshift (easier)" aria-label="Downshift">−</button>
+                  <button id="virtualShiftUpBtn" type="button" class="btn btn-ghost btn-sm" title="Upshift (harder)" aria-label="Upshift">+</button>
+                </div>
+              </div>
+              <p id="virtualShiftHint" class="virtual-shift-hint">J down · L up</p>
+            </div>
             <div class="rider-zone-form">
               <label>
                 <span>Resting HR</span>
@@ -577,7 +597,7 @@
             <span>Units</span>
           </button>
           <button type="button" class="settings-tab" data-settings-tab="trainer"
-            data-panel-title="Trainer &amp; sensors" data-panel-subtitle="How the smart trainer receives the route's grade.">
+            data-panel-title="Trainer &amp; sensors" data-panel-subtitle="How the smart trainer receives the route's grade and virtual gear resistance.">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"></path></svg>
             <span>Trainer &amp; sensors</span>
           </button>
@@ -863,6 +883,38 @@
             <p class="settings-note">
               How often the route's grade is sent to the trainer. Longer
               intervals smooth resistance changes on noisy GPX files.
+            </p>
+            <div class="setting-row">
+              <div class="setting-row-text">
+                <span class="setting-row-label">Virtual shifting</span>
+                <span class="setting-row-hint">two-key gear changes instead of shifting the real bike</span>
+              </div>
+              <label class="switch">
+                <input id="virtualShiftingInput" type="checkbox">
+                <span class="switch-track"><span class="switch-knob"></span></span>
+              </label>
+            </div>
+            <div class="setting-row">
+              <div class="setting-row-text">
+                <span class="setting-row-label">Gear profile</span>
+                <span class="setting-row-hint">drivetrain used to build the virtual gears</span>
+              </div>
+              <select id="virtualShiftProfileSelect"></select>
+            </div>
+            <div class="setting-row">
+              <div class="setting-row-text">
+                <span class="setting-row-label">Shift keys</span>
+                <span class="setting-row-hint">click a key, then press the replacement</span>
+              </div>
+              <div class="virtual-shift-key-buttons">
+                <button id="virtualShiftDownKeyBtn" type="button" class="btn btn-outline-blue btn-sm">J down</button>
+                <button id="virtualShiftUpKeyBtn" type="button" class="btn btn-outline-blue btn-sm">L up</button>
+              </div>
+            </div>
+            <p class="settings-note">
+              Leave the bike in one gear. Each virtual shift adds or removes
+              resistance on top of the road grade, so the gradient and the
+              selected gear together decide resistance and speed.
             </p>
           </section>
 

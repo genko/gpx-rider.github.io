@@ -44,6 +44,10 @@ import {
   DEFAULT_THEATER_HIDE_METERS,
   DEFAULT_THEATER_HIDE_MINIMAP,
   DEFAULT_TIME_FORMAT,
+  DEFAULT_VIRTUAL_SHIFT_DOWNSHIFT_KEY,
+  DEFAULT_VIRTUAL_SHIFT_ENABLED,
+  DEFAULT_VIRTUAL_SHIFT_PROFILE,
+  DEFAULT_VIRTUAL_SHIFT_UPSHIFT_KEY,
 } from "./tuning.mjs";
 
 export const state = {
@@ -79,6 +83,18 @@ export const state = {
   trainerCadenceRpm: null,
   trainerCaloriesKcal: null,
   powerCaloriesKcal: 0,
+  // Virtual shifting: the selected drivetrain profile (resolved gears live in
+  // virtualGearProfile, set by ride/virtual-shifting.mjs), the current gear
+  // index (null until the profile's default is resolved), and the two
+  // rebindable shifter keys (J = easier/downshift, L = harder/upshift by
+  // default).
+  virtualShiftingEnabled: DEFAULT_VIRTUAL_SHIFT_ENABLED,
+  virtualGearProfileId: DEFAULT_VIRTUAL_SHIFT_PROFILE,
+  virtualGearIndex: null,
+  virtualGearProfile: null,
+  virtualShiftDownshiftKey: DEFAULT_VIRTUAL_SHIFT_DOWNSHIFT_KEY,
+  virtualShiftUpshiftKey: DEFAULT_VIRTUAL_SHIFT_UPSHIFT_KEY,
+  virtualShiftKeyCapture: null,
   trainerHeartRateBpm: null,
   strapHeartRateBpm: null,
   heartRateStatusText: null,
@@ -248,6 +264,19 @@ export const els = {
   speedOutput: document.querySelector("#speedOutput"),
   gradeIntervalInput: document.querySelector("#gradeIntervalInput"),
   gradeIntervalOutput: document.querySelector("#gradeIntervalOutput"),
+  virtualShiftingInput: document.querySelector("#virtualShiftingInput"),
+  virtualShiftProfileSelect: document.querySelector("#virtualShiftProfileSelect"),
+  virtualShiftDownKeyBtn: document.querySelector("#virtualShiftDownKeyBtn"),
+  virtualShiftUpKeyBtn: document.querySelector("#virtualShiftUpKeyBtn"),
+  virtualShiftPanel: document.querySelector("#virtualShiftPanel"),
+  virtualShiftGear: document.querySelector("#virtualShiftGear"),
+  virtualShiftDetail: document.querySelector("#virtualShiftDetail"),
+  virtualShiftHint: document.querySelector("#virtualShiftHint"),
+  virtualShiftDownBtn: document.querySelector("#virtualShiftDownBtn"),
+  virtualShiftUpBtn: document.querySelector("#virtualShiftUpBtn"),
+  virtualShiftHud: document.querySelector("#virtualShiftHud"),
+  virtualShiftHudGear: document.querySelector("#virtualShiftHudGear"),
+  virtualShiftHudDetail: document.querySelector("#virtualShiftHudDetail"),
   distanceUnitSelect: document.querySelector("#distanceUnitSelect"),
   energyUnitSelect: document.querySelector("#energyUnitSelect"),
   timeFormatSelect: document.querySelector("#timeFormatSelect"),

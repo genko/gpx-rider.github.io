@@ -11,7 +11,10 @@ import { RIDE_PERSIST_INTERVAL_MS, RIDE_SAMPLE_INTERVAL_MS } from "../core/tunin
 const RIDE_LOG_STORAGE_KEY = "gpx-rider:ride-log";
 
 // Samples are stored as compact arrays to keep the persisted log small:
-// [unixSeconds, lat, lng, ele, distanceMeters, speedKph, powerWatts, heartRateBpm, caloriesKcal, routeProgressMeters, cadenceRpm]
+// [unixSeconds, lat, lng, ele, distanceMeters, speedKph, powerWatts, heartRateBpm, caloriesKcal, routeProgressMeters, cadenceRpm, gradePercent]
+// gradePercent is always the actual route grade — never the virtual-shifting
+// resistance grade — so exported FIT files describe the road, not the trainer
+// setting.
 const log = emptyLog();
 
 function emptyLog() {
@@ -46,6 +49,7 @@ export function recordRideTick({
   caloriesKcal,
   routeProgressMeters,
   cadenceRpm,
+  gradePercent,
 }) {
   const now = Date.now();
   if (log.startedAtMs === null) log.startedAtMs = now;
@@ -67,6 +71,7 @@ export function recordRideTick({
     Number.isFinite(caloriesKcal) ? Math.round(caloriesKcal) : null,
     Number.isFinite(routeProgressMeters) ? Math.round(routeProgressMeters * 10) / 10 : null,
     Number.isFinite(cadenceRpm) ? Math.round(cadenceRpm) : null,
+    Number.isFinite(gradePercent) ? Math.round(gradePercent * 100) / 100 : null,
   ]);
 
   if (now - log.lastPersistAtMs >= RIDE_PERSIST_INTERVAL_MS) persistRideLog();
@@ -121,7 +126,7 @@ function findLastCalories() {
 }
 
 export function rideLogSamples() {
-  return log.samples.map(([t, lat, lng, ele, distance, speedKph, powerWatts, heartRateBpm, caloriesKcal, routeProgressMeters, cadenceRpm]) => ({
+  return log.samples.map(([t, lat, lng, ele, distance, speedKph, powerWatts, heartRateBpm, caloriesKcal, routeProgressMeters, cadenceRpm, gradePercent]) => ({
     t,
     lat,
     lng,
@@ -133,6 +138,8 @@ export function rideLogSamples() {
     caloriesKcal,
     routeProgressMeters: Number.isFinite(routeProgressMeters) ? routeProgressMeters : distance,
     cadenceRpm: Number.isFinite(cadenceRpm) ? cadenceRpm : null,
+    // Saved logs from before the grade field simply omit it.
+    gradePercent: Number.isFinite(gradePercent) ? gradePercent : null,
   }));
 }
 

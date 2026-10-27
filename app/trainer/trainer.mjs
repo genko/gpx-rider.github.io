@@ -54,6 +54,7 @@ let callbacks = {
   onTelemetry: () => {},
   onStatus: () => {},
   onMessage: () => {},
+  onConnected: () => {},
 };
 
 export function initTrainer(handlers) {
@@ -162,6 +163,7 @@ async function connectTrainerDevice(device) {
   // FE-C trainers accept Track Resistance directly — no control handshake.
 
   callbacks.onStatus(device.name || "Connected");
+  callbacks.onConnected();
 }
 
 async function connectFtms(service) {
@@ -338,7 +340,15 @@ function handleBikeData(event) {
 // instantaneous value: smooths out point-to-point jitter (2.9/3.0/2.9) and,
 // combined with the hard interval, guarantees we never enqueue BLE writes
 // faster than the trainer can actually process them.
-export function queueTrainerGradeSample(gradePercent, { force = false, intervalSeconds = 2 } = {}) {
+export function queueTrainerGradeSample(gradePercent, { force = false, intervalSeconds = 2, reset = false } = {}) {
+  // A discrete event (a virtual gear shift) must not be averaged with route
+  // samples collected since the last send, or the new resistance would come
+  // out mushy. Clearing the bucket makes the forced write exactly the new
+  // grade.
+  if (reset) {
+    trainer.gradeSampleSum = 0;
+    trainer.gradeSampleCount = 0;
+  }
   trainer.gradeSampleSum += gradePercent;
   trainer.gradeSampleCount += 1;
 

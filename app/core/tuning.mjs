@@ -63,6 +63,17 @@ export const GRADE_INTERVAL_MIN_SECONDS = req("trainer", "grade_interval", "min_
 export const GRADE_INTERVAL_MAX_SECONDS = req("trainer", "grade_interval", "max_seconds");
 export const TACX_FEC_DEFAULT_CRR = req("trainer", "fec_default_crr");
 
+// Virtual shifting
+export const VIRTUAL_SHIFTING = req("virtual_shifting");
+export const DEFAULT_VIRTUAL_SHIFT_ENABLED = req("virtual_shifting", "enabled");
+export const DEFAULT_VIRTUAL_SHIFT_PROFILE = req("virtual_shifting", "profile");
+export const DEFAULT_VIRTUAL_SHIFT_DOWNSHIFT_KEY = req("virtual_shifting", "downshift_key");
+export const DEFAULT_VIRTUAL_SHIFT_UPSHIFT_KEY = req("virtual_shifting", "upshift_key");
+export const VIRTUAL_SHIFT_GRADE_OFFSET_GAIN = req("virtual_shifting", "grade_offset_gain");
+export const VIRTUAL_SHIFT_GEAR_OVERLAP_TOLERANCE = req("virtual_shifting", "gear_overlap_tolerance");
+export const VIRTUAL_SHIFT_WHEEL_CIRCUMFERENCE_METERS = req("virtual_shifting", "wheel_circumference_meters");
+export const VIRTUAL_SHIFT_PROFILES = req("virtual_shifting", "profiles");
+
 // Route math
 export const GRADE_LOOKAROUND_METERS = req("route_math", "grade_lookaround_meters");
 export const GRADE_MIN_PERCENT = req("route_math", "grade", "min_percent");

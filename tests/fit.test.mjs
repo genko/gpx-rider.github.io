@@ -13,9 +13,9 @@ function sampleRide() {
   const startSeconds = START_MS / 1000;
   return {
     samples: [
-      { t: startSeconds, lat: 50.087, lng: 14.421, ele: 200, distance: 0, speedKph: 0, powerWatts: 0, heartRateBpm: 90, cadenceRpm: 0 },
-      { t: startSeconds + 1, lat: 50.0871, lng: 14.4211, ele: 200.4, distance: 12, speedKph: 25.4, powerWatts: 180, heartRateBpm: 120, cadenceRpm: 88 },
-      { t: startSeconds + 2, lat: 50.0872, lng: 14.4212, ele: 200.9, distance: 25, speedKph: null, powerWatts: null, heartRateBpm: null, cadenceRpm: null },
+      { t: startSeconds, lat: 50.087, lng: 14.421, ele: 200, distance: 0, speedKph: 0, powerWatts: 0, heartRateBpm: 90, cadenceRpm: 0, gradePercent: 0 },
+      { t: startSeconds + 1, lat: 50.0871, lng: 14.4211, ele: 200.4, distance: 12, speedKph: 25.4, powerWatts: 180, heartRateBpm: 120, cadenceRpm: 88, gradePercent: 6.5 },
+      { t: startSeconds + 2, lat: 50.0872, lng: 14.4212, ele: 200.9, distance: 25, speedKph: null, powerWatts: null, heartRateBpm: null, cadenceRpm: null, gradePercent: -2.25 },
     ],
     summary: {
       startTimeMs: START_MS,
@@ -105,6 +105,48 @@ test("record message definition declares a cadence field carrying rpm", () => {
   assert.ok(cadenceFieldFound, "record definition must declare field 4 (cadence)");
 
   assert.ok(bytes.includes(88), "cadence value 88 rpm must appear in the encoded record data");
+});
+
+test("record message carries the actual road grade, not a virtual-shifting offset", () => {
+  const bytes = encodeFitActivity(sampleRide());
+
+  // Locate the record definition (local type 2, global message 20) and read
+  // its field list so the grade can be decoded from the following data
+  // records without guessing at byte offsets.
+  const defHeaderIndex = bytes.findIndex((byte, i) =>
+    byte === 0x42 && bytes[i + 1] === 0 && bytes[i + 2] === 0 && bytes[i + 3] === 20 && bytes[i + 4] === 0
+  );
+  assert.notEqual(defHeaderIndex, -1, "record definition message not found");
+
+  const fieldCount = bytes[defHeaderIndex + 5];
+  const fieldsStart = defHeaderIndex + 6;
+  const fields = [];
+  for (let i = 0; i < fieldCount; i += 1) {
+    const [fieldNumber, size, baseType] = bytes.slice(fieldsStart + i * 3, fieldsStart + i * 3 + 3);
+    fields.push({ fieldNumber, size, baseType });
+  }
+
+  const gradeField = fields.find((field) => field.fieldNumber === 9);
+  assert.ok(gradeField, "record definition must declare field 9 (grade)");
+  assert.equal(gradeField.size, 2, "grade is a 2-byte field");
+  assert.equal(gradeField.baseType, 0x83, "grade is sint16");
+
+  const recordSize = 1 + fields.reduce((sum, field) => sum + field.size, 0);
+  const recordDataStart = fieldsStart + fieldCount * 3;
+  const gradeOffset = 1 + fields
+    .slice(0, fields.indexOf(gradeField))
+    .reduce((sum, field) => sum + field.size, 0);
+
+  function readGrade(recordStart) {
+    const offset = recordStart + gradeOffset;
+    const raw = bytes[offset] | (bytes[offset + 1] << 8);
+    return raw > 0x7fff ? raw - 0x10000 : raw;
+  }
+
+  // sampleRide grades: 0%, 6.5%, -2.25% -> FIT stores hundredths of a percent.
+  assert.equal(readGrade(recordDataStart), 0);
+  assert.equal(readGrade(recordDataStart + recordSize), 650);
+  assert.equal(readGrade(recordDataStart + recordSize * 2), -225);
 });
 
 test("encoding refuses an empty ride", () => {

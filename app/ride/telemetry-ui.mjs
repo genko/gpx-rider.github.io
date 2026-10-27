@@ -10,6 +10,7 @@ import { rideLogSummary } from "./recorder.mjs";
 import { gradeAt } from "../route/route.mjs";
 import { els, state } from "../core/state.mjs";
 import { isTrainerConnected } from "../trainer/trainer.mjs";
+import { refreshTrainerResistance } from "./virtual-shifting.mjs";
 import { updateTrainingMeters } from "./training-zones.mjs";
 import { HEART_RATE_REFRESH_MS } from "../core/tuning.mjs";
 import { formatEnergy, formatSpeed } from "../core/units.mjs";
@@ -53,6 +54,12 @@ export function handleTrainerStatus(text, { onlyClearError = false } = {}) {
   }
   if (onlyClearError && els.trainerStat.textContent !== "BLE error") return;
   els.trainerStat.textContent = text;
+}
+
+// A trainer that just finished connecting needs the current gear and grade:
+// the ride may be sitting still, so no slow-UI tick is coming to do it.
+export function handleTrainerConnected() {
+  refreshTrainerResistance();
 }
 
 export function handleStrapHeartRate(bpm) {
